@@ -1,0 +1,56 @@
+# Build configuration and provenance
+date: 2026-08-27T12:03:17Z
+
+=== source provenance ===
+board source tree transferred via: git archive 8f49eae32bdec3674a9a98ea1524a85cd1f302db | tar xf - -C ~/onednn-verify/src
+(exported from the local audit repo on 2026-08-27; no modifications)
+
+=== cmake configure (release) ===
+cmake -S src -B build-rel -G Ninja \
+  -DCMAKE_BUILD_TYPE=Release \
+  -DCMAKE_C_COMPILER_LAUNCHER=ccache -DCMAKE_CXX_COMPILER_LAUNCHER=ccache \
+  -DONEDNN_BUILD_TESTS=ON -DONEDNN_BUILD_EXAMPLES=OFF -DONEDNN_BUILD_GRAPH=OFF \
+  -DONEDNN_ENABLE_PRIMITIVE="PRELU;REDUCTION;SHUFFLE"
+build: ninja -C build-rel benchdnn -j 8   (371 steps, ~42 min)
+
+=== cmake configure (debug) ===
+cmake -S src -B build-dbg -G Ninja \
+  -DCMAKE_BUILD_TYPE=Debug \
+  -DCMAKE_C_COMPILER_LAUNCHER=ccache -DCMAKE_CXX_COMPILER_LAUNCHER=ccache \
+  -DONEDNN_BUILD_TESTS=ON -DONEDNN_BUILD_EXAMPLES=OFF -DONEDNN_BUILD_GRAPH=OFF \
+  -DONEDNN_ENABLE_PRIMITIVE="PRELU;REDUCTION;SHUFFLE"
+build: ninja -C build-dbg benchdnn -j 8   (371 steps, ~25 min, ccache warm)
+
+=== CMakeCache key entries (release) ===
+CMAKE_BUILD_TYPE:STRING=Release
+CMAKE_CXX_COMPILER:FILEPATH=/usr/bin/c++
+CMAKE_CXX_FLAGS:STRING=
+ONEDNN_BUILD_GRAPH:BOOL=OFF
+ONEDNN_BUILD_TESTS:BOOL=ON
+ONEDNN_ENABLE_PRIMITIVE:STRING=PRELU;REDUCTION;SHUFFLE
+//Alias for ONEDNN_BUILD_GRAPH
+//Alias for ONEDNN_BUILD_TESTS
+=== CMakeCache key entries (debug) ===
+CMAKE_BUILD_TYPE:STRING=Debug
+CMAKE_CXX_COMPILER:FILEPATH=/usr/bin/c++
+CMAKE_CXX_FLAGS:STRING=
+ONEDNN_BUILD_GRAPH:BOOL=OFF
+ONEDNN_BUILD_TESTS:BOOL=ON
+ONEDNN_ENABLE_PRIMITIVE:STRING=PRELU;REDUCTION;SHUFFLE
+//Alias for ONEDNN_BUILD_GRAPH
+//Alias for ONEDNN_BUILD_TESTS
+
+=== probe build commands (all compiled on board) ===
+# C++ probes link against the release build (rpath-pinned):
+g++ -O2 -g -std=c++17 -fopenmp -I src/include -I build-rel/include \
+    dynval/<name>.cpp -o dynval/<name> -L build-rel/src -ldnnl -Wl,-rpath,$PWD/build-rel/src
+  -> reduction_tail_probe, prelu_nan_probe, shuffle_zero_batch_probe
+# C API probe:
+g++ -O1 -g -std=c++17 -I src/include -I build-rel/include \
+    dynval/shuffle_c_probe.c -o dynval/shuffle_c_probe -L build-rel/src -ldnnl -Wl,-rpath,$PWD/build-rel/src
+# microbenchmarks (no dnnl dependency):
+gcc -march=rv64gcv -O1 -o dynval/vta_probe dynval/vta_probe.c
+gcc -O2 -o dynval/divzero_probe dynval/divzero_probe.c
+gcc -O2 -o dynval/zvfbfwma_probe dynval/zvfbfwma_probe.c
+# note: probes are linked against build-rel; the debug-library runs of
+#       shuffle probes switch LD_LIBRARY_PATH to build-dbg/src (same soname).

@@ -1,0 +1,100 @@
+# RV64-001 PReLU NaN probe (fixed: weights rank == src ndims, x/per_oc dedup)
+# binary: ~/onednn-verify/dynval/prelu_nan_probe, linked build-rel/src/libdnnl.so.3.14
+# command form: ./prelu_nan_probe <f32|f16> <x|nc|nchw> <full|scalar|per_oc>
+
+--- f32 x full ---
+impl: jit:rvv
+dt=f32 tag=x broadcast=full src[0]=qNaN alpha=0.25
+reference semantics: dst[0]=NaN   actual dst[0]=0 (f32 bits=0x00000000)
+DIVERGENCE CONFIRMED: qNaN -> 0 (RV64-001, f32 path)
+exit=1
+--- f32 x scalar ---
+impl: jit:rvv
+dt=f32 tag=x broadcast=scalar src[0]=qNaN alpha=0.25
+reference semantics: dst[0]=NaN   actual dst[0]=0 (f32 bits=0x00000000)
+DIVERGENCE CONFIRMED: qNaN -> 0 (RV64-001, f32 path)
+exit=1
+--- f32 nc full ---
+impl: jit:rvv
+dt=f32 tag=nc broadcast=full src[0]=qNaN alpha=0.25
+reference semantics: dst[0]=NaN   actual dst[0]=0 (f32 bits=0x00000000)
+DIVERGENCE CONFIRMED: qNaN -> 0 (RV64-001, f32 path)
+exit=1
+--- f32 nc scalar ---
+impl: jit:rvv
+dt=f32 tag=nc broadcast=scalar src[0]=qNaN alpha=0.25
+reference semantics: dst[0]=NaN   actual dst[0]=0 (f32 bits=0x00000000)
+DIVERGENCE CONFIRMED: qNaN -> 0 (RV64-001, f32 path)
+exit=1
+--- f32 nc per_oc ---
+impl: jit:rvv
+dt=f32 tag=nc broadcast=per_oc src[0]=qNaN alpha=0.25
+reference semantics: dst[0]=NaN   actual dst[0]=0 (f32 bits=0x00000000)
+DIVERGENCE CONFIRMED: qNaN -> 0 (RV64-001, f32 path)
+exit=1
+--- f32 nchw full ---
+impl: jit:rvv
+dt=f32 tag=nchw broadcast=full src[0]=qNaN alpha=0.25
+reference semantics: dst[0]=NaN   actual dst[0]=0 (f32 bits=0x00000000)
+DIVERGENCE CONFIRMED: qNaN -> 0 (RV64-001, f32 path)
+exit=1
+--- f32 nchw scalar ---
+impl: jit:rvv
+dt=f32 tag=nchw broadcast=scalar src[0]=qNaN alpha=0.25
+reference semantics: dst[0]=NaN   actual dst[0]=0 (f32 bits=0x00000000)
+DIVERGENCE CONFIRMED: qNaN -> 0 (RV64-001, f32 path)
+exit=1
+--- f32 nchw per_oc ---
+impl: jit:rvv
+dt=f32 tag=nchw broadcast=per_oc src[0]=qNaN alpha=0.25
+reference semantics: dst[0]=NaN   actual dst[0]=0 (f32 bits=0x00000000)
+DIVERGENCE CONFIRMED: qNaN -> 0 (RV64-001, f32 path)
+exit=1
+--- f16 x full ---
+impl: jit:rvv
+dt=f16 tag=x broadcast=full src[0]=qNaN(0x7e00) alpha=0.25
+reference semantics: dst[0]=NaN   actual dst[0]=0 (f16 bits=0x0000)
+DIVERGENCE CONFIRMED: qNaN -> 0 (RV64-001, f16 path)
+exit=1
+--- f16 x scalar ---
+impl: jit:rvv
+dt=f16 tag=x broadcast=scalar src[0]=qNaN(0x7e00) alpha=0.25
+reference semantics: dst[0]=NaN   actual dst[0]=0 (f16 bits=0x0000)
+DIVERGENCE CONFIRMED: qNaN -> 0 (RV64-001, f16 path)
+exit=1
+--- f16 nc full ---
+impl: jit:rvv
+dt=f16 tag=nc broadcast=full src[0]=qNaN(0x7e00) alpha=0.25
+reference semantics: dst[0]=NaN   actual dst[0]=0 (f16 bits=0x0000)
+DIVERGENCE CONFIRMED: qNaN -> 0 (RV64-001, f16 path)
+exit=1
+--- f16 nc scalar ---
+impl: jit:rvv
+dt=f16 tag=nc broadcast=scalar src[0]=qNaN(0x7e00) alpha=0.25
+reference semantics: dst[0]=NaN   actual dst[0]=0 (f16 bits=0x0000)
+DIVERGENCE CONFIRMED: qNaN -> 0 (RV64-001, f16 path)
+exit=1
+--- f16 nc per_oc ---
+impl: jit:rvv
+dt=f16 tag=nc broadcast=per_oc src[0]=qNaN(0x7e00) alpha=0.25
+reference semantics: dst[0]=NaN   actual dst[0]=0 (f16 bits=0x0000)
+DIVERGENCE CONFIRMED: qNaN -> 0 (RV64-001, f16 path)
+exit=1
+--- f16 nchw full ---
+impl: jit:rvv
+dt=f16 tag=nchw broadcast=full src[0]=qNaN(0x7e00) alpha=0.25
+reference semantics: dst[0]=NaN   actual dst[0]=0 (f16 bits=0x0000)
+DIVERGENCE CONFIRMED: qNaN -> 0 (RV64-001, f16 path)
+exit=1
+--- f16 nchw scalar ---
+impl: jit:rvv
+dt=f16 tag=nchw broadcast=scalar src[0]=qNaN(0x7e00) alpha=0.25
+reference semantics: dst[0]=NaN   actual dst[0]=0 (f16 bits=0x0000)
+DIVERGENCE CONFIRMED: qNaN -> 0 (RV64-001, f16 path)
+exit=1
+--- f16 nchw per_oc ---
+impl: jit:rvv
+dt=f16 tag=nchw broadcast=per_oc src[0]=qNaN(0x7e00) alpha=0.25
+reference semantics: dst[0]=NaN   actual dst[0]=0 (f16 bits=0x0000)
+DIVERGENCE CONFIRMED: qNaN -> 0 (RV64-001, f16 path)
+exit=1

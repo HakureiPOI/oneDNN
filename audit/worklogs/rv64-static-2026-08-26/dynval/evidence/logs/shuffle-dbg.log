@@ -1,0 +1,82 @@
+# RV64-004 shuffle zero-batch (fixed probe) — DEBUG build
+# binary: ~/onednn-verify/dynval/shuffle_zero_batch_probe, linked build-dbg/src/libdnnl.so.3.14 (Debug)
+
+--- debug fwd threads=1 ---
+direction=fwd OMP_NUM_THREADS=1
+fwd impl: jit:rvv
+PD accepted zero-batch descriptor
+step: executing fwd...
+shuffle_zero_batch_probe: /root/onednn-verify/src/src/common/utils.hpp:367: dnnl::impl::utils::enable_if_t<(std::is_integral<_Tp>::value && (std::is_integral<_Size>::value || std::is_enum<_Tp2>::value)), typename dnnl::impl::utils::remove_reference<T>::type> dnnl::impl::utils::div_up(T, U) [with T = long int; U = long int; enable_if_t<(std::is_integral<_Tp>::value && (std::is_integral<_Size>::value || std::is_enum<_Tp2>::value)), typename remove_reference<T>::type> = long int; typename remove_reference<T>::type = long int]: Assertion `b > 0' failed.
+timeout: 被监视的命令已核心转储
+exit=134
+--- debug fwd threads=4 ---
+direction=fwd OMP_NUM_THREADS=4
+fwd impl: jit:rvv
+PD accepted zero-batch descriptor
+step: executing fwd...
+shuffle_zero_batch_probe: /root/onednn-verify/src/src/common/utils.hpp:367: dnnl::impl::utils::enable_if_t<(std::is_integral<_Tp>::value && (std::is_integral<_Size>::value || std::is_enum<_Tp2>::value)), typename dnnl::impl::utils::remove_reference<T>::type> dnnl::impl::utils::div_up(T, U) [with T = long int; U = long int; enable_if_t<(std::is_integral<_Tp>::value && (std::is_integral<_Size>::value || std::is_enum<_Tp2>::value)), typename remove_reference<T>::type> = long int; typename remove_reference<T>::type = long int]: Assertion `b > 0' failed.
+timeout: 被监视的命令已核心转储
+exit=134
+--- debug fwd threads=8 ---
+direction=fwd OMP_NUM_THREADS=8
+fwd impl: jit:rvv
+PD accepted zero-batch descriptor
+step: executing fwd...
+shuffle_zero_batch_probe: /root/onednn-verify/src/src/common/utils.hpp:367: dnnl::impl::utils::enable_if_t<(std::is_integral<_Tp>::value && (std::is_integral<_Size>::value || std::is_enum<_Tp2>::value)), typename dnnl::impl::utils::remove_reference<T>::type> dnnl::impl::utils::div_up(T, U) [with T = long int; U = long int; enable_if_t<(std::is_integral<_Tp>::value && (std::is_integral<_Size>::value || std::is_enum<_Tp2>::value)), typename remove_reference<T>::type> = long int; typename remove_reference<T>::type = long int]: Assertion `b > 0' failed.
+timeout: 被监视的命令已核心转储
+exit=134
+--- debug bwd threads=1 ---
+direction=bwd OMP_NUM_THREADS=1
+hint fwd impl: jit:rvv
+bwd impl: jit:rvv
+PD accepted zero-batch descriptor
+step: executing bwd...
+shuffle_zero_batch_probe: /root/onednn-verify/src/src/common/utils.hpp:367: dnnl::impl::utils::enable_if_t<(std::is_integral<_Tp>::value && (std::is_integral<_Size>::value || std::is_enum<_Tp2>::value)), typename dnnl::impl::utils::remove_reference<T>::type> dnnl::impl::utils::div_up(T, U) [with T = long int; U = long int; enable_if_t<(std::is_integral<_Tp>::value && (std::is_integral<_Size>::value || std::is_enum<_Tp2>::value)), typename remove_reference<T>::type> = long int; typename remove_reference<T>::type = long int]: Assertion `b > 0' failed.
+timeout: 被监视的命令已核心转储
+exit=134
+--- debug bwd threads=4 ---
+direction=bwd OMP_NUM_THREADS=4
+hint fwd impl: jit:rvv
+bwd impl: jit:rvv
+PD accepted zero-batch descriptor
+step: executing bwd...
+shuffle_zero_batch_probe: /root/onednn-verify/src/src/common/utils.hpp:367: dnnl::impl::utils::enable_if_t<(std::is_integral<_Tp>::value && (std::is_integral<_Size>::value || std::is_enum<_Tp2>::value)), typename dnnl::impl::utils::remove_reference<T>::type> dnnl::impl::utils::div_up(T, U) [with T = long int; U = long int; enable_if_t<(std::is_integral<_Tp>::value && (std::is_integral<_Size>::value || std::is_enum<_Tp2>::value)), typename remove_reference<T>::type> = long int; typename remove_reference<T>::type = long int]: Assertion `b > 0' failed.
+timeout: 被监视的命令已核心转储
+exit=134
+--- debug bwd threads=8 ---
+direction=bwd OMP_NUM_THREADS=8
+hint fwd impl: jit:rvv
+bwd impl: jit:rvv
+PD accepted zero-batch descriptor
+step: executing bwd...
+shuffle_zero_batch_probe: /root/onednn-verify/src/src/common/utils.hpp:367: dnnl::impl::utils::enable_if_t<(std::is_integral<_Tp>::value && (std::is_integral<_Size>::value || std::is_enum<_Tp2>::value)), typename dnnl::impl::utils::remove_reference<T>::type> dnnl::impl::utils::div_up(T, U) [with T = long int; U = long int; enable_if_t<(std::is_integral<_Tp>::value && (std::is_integral<_Size>::value || std::is_enum<_Tp2>::value)), typename remove_reference<T>::type> = long int; typename remove_reference<T>::type = long int]: Assertion `b > 0' failed.
+timeout: 被监视的命令已核心转储
+exit=134
+--- debug C-API probe MB=0 ---
+MB=0 C=4 W=1 axis=1 group=2
+engine: success
+md: success
+pd create: success
+pd impl: jit:rvv (success)
+primitive create: success
+src mem: success
+dst mem: success
+stream: success
+step: executing...
+shuffle_c_probe: /root/onednn-verify/src/src/common/utils.hpp:367: dnnl::impl::utils::enable_if_t<(std::is_integral<_Tp>::value && (std::is_integral<_Size>::value || std::is_enum<_Tp2>::value)), typename dnnl::impl::utils::remove_reference<T>::type> dnnl::impl::utils::div_up(T, U) [with T = long int; U = long int; enable_if_t<(std::is_integral<_Tp>::value && (std::is_integral<_Size>::value || std::is_enum<_Tp2>::value)), typename remove_reference<T>::type> = long int; typename remove_reference<T>::type = long int]: Assertion `b > 0' failed.
+timeout: 被监视的命令已核心转储
+exit=134
+--- debug C-API probe MB=2 (control) ---
+MB=2 C=4 W=1 axis=1 group=2
+engine: success
+md: success
+pd create: success
+pd impl: jit:rvv (success)
+primitive create: success
+src mem: success
+dst mem: success
+stream: success
+step: executing...
+execute: success  <-- RV64-004 interest point
+wait: success
+exit=0

@@ -1,0 +1,46 @@
+# RV64-004 shuffle zero-batch — additional release matrix (benchdnn + dtype/tag/shape)
+
+## release benchdnn f32 0x4x1 (re-confirmation with full output)
+= Implementation statistics (--summary=no-impl to disable) =
+============================================================
+| jit:rvv : 1 (100%)                                       |
+============================================================
+tests:1 passed:1 skipped:0 mistrusted:0 unimplemented:0 invalid_arguments:0 failed:0 listed:0
+total: 0.01s; create_pd: 0.00s (6%); create_prim: 0.00s (39%); fill: 0.00s (1%); execute: 0.00s (1%); compute_ref: 0.00s (15%); compare: 0.00s (0%);
+exit=0
+
+## release benchdnn dtype matrix (f16/s32/f32), fwd+bwd
+--- f16 FWD_D 0x4x1 ---
+0:PASSED (7 ms) __REPRO: --fast-ref=false --shuffle --impl=jit:rvv --dt=f16 --group=2 0x4x1
+exit=0
+--- f16 BWD_D 0x4x1 ---
+0:PASSED (6 ms) __REPRO: --fast-ref=false --shuffle --impl=jit:rvv --dir=BWD_D --dt=f16 --group=2 0x4x1
+exit=0
+--- s32 FWD_D 0x4x1 ---
+0:PASSED (3 ms) __REPRO: --fast-ref=false --shuffle --impl=jit:rvv --dt=s32 --group=2 0x4x1
+exit=0
+--- s32 BWD_D 0x4x1 ---
+0:PASSED (2 ms) __REPRO: --fast-ref=false --shuffle --impl=jit:rvv --dir=BWD_D --dt=s32 --group=2 0x4x1
+exit=0
+--- f32 FWD_D 0x4x1 ---
+0:PASSED (3 ms) __REPRO: --fast-ref=false --shuffle --impl=jit:rvv --group=2 0x4x1
+exit=0
+--- f32 BWD_D 0x4x1 ---
+0:PASSED (2 ms) __REPRO: --fast-ref=false --shuffle --impl=jit:rvv --dir=BWD_D --group=2 0x4x1
+exit=0
+
+## release benchdnn 3D tag matrix (ncw/nwc), f32 fwd
+--- tag=ncw 0x4x1 ---
+0:PASSED (2 ms) __REPRO: --fast-ref=false --shuffle --impl=jit:rvv --tag=ncw --group=2 0x4x1
+exit=0
+--- tag=nwc 0x4x1 ---
+0:PASSED (2 ms) __REPRO: --fast-ref=false --shuffle --impl=jit:rvv --tag=nwc --group=2 0x4x1
+exit=0
+
+## release benchdnn 0x4x64 (4D nchw default) — expected ref fallback
+0:PASSED (8 ms) __REPRO: --fast-ref=false --shuffle --impl=ref:any --group=2 0x4x64
+| ref:any : 1 (100%)                                       |
+exit=0
+
+## release benchdnn 0x4x64 verbose dispatch reason
+onednn_verbose,v1,primitive,create:dispatch,shuffle,cpu,shuffle,jit:rvv,forward_training,data:f32::blocked:abc::f0,,axis:1 group:2,0x4x64,unsupported format tag,src/cpu/rv64/shuffle/jit_uni_shuffle.hpp:102

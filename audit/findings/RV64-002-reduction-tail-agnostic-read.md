@@ -1,10 +1,11 @@
 # RV64-002: Reduction reads tail-agnostic accumulator lanes
 
-- 状态：静态确认
+- 状态：静态确认（X60 硬件上未复现——本次 e32/m8 `vfadd.vv` 微基准保留 tail，相关 reduction 路径未观察到错误；结果不具反证性）
 - 严重性：high（静默错误结果；所有 RV64 reduction algorithms can hit it at a VLEN-dependent tail）
 - 审计基线：`8f49eae32bdec3674a9a98ea1524a85cd1f302db`
-- 当前文档 HEAD：`529c7247f524902377455c62ab283b44918e285c`
-- 环境：仅静态审计；x86_64 WSL2；未构建或运行 RV64/QEMU/benchdnn/ctest/sanitizer。
+- 静态审计文档 HEAD：`529c7247f524902377455c62ab283b44918e285c`
+- 动态验证文档基线 HEAD：`dc863e4afba22fba060d7059683a67a9b1bc8e6c`（静态审计文档提交；动态验证结果作为其增量修订）
+- 环境：静态审计于 x86_64 WSL2；动态验证于 2026-08-27 在 Spacemit K1 完成（未复现，根因已用微基准隔离）。
 - primitive / implementation：Reduction forward / `jit_uni_reduction_t` and `jit_uni_reduction_kernel_t`
 - 涉及文件和符号：
   - `src/cpu/cpu_reduction_list.cpp:38-44`；
@@ -78,7 +79,18 @@ When the last iteration is short, software cannot rely on `v_acc[r:VLMAX]` retai
 - Layout: all layouts accepted by this PD (`x`, `nc`, `ncw`, `nchw`, `ncdhw`) use the same contiguous suffix kernel.
 - The error is silent wrong output, not an expected cross-architecture rounding difference. It can affect any VLEN because the trigger is defined relative to that VLEN.
 
-## Minimal future dynamic validation (not executed)
+## Dynamic validation results (2026-08-27, Spacemit K1 / X60, VLEN=256)
+
+Status: **not reproduced on this hardware; the result is not falsifying.**
+
+- Ran on the board build of baseline `8f49eae32`; implementation confirmed as `jit:uni` via verbose.
+- Scan matrix (fixed oracle: f16 inputs quantized before summation, exact comparison): f32/f16 × {max,min,sum,mean} × reduce_size in {65,66,70,96,129,130,160,200} (64 matrix cases) plus 2 controls with the extremum in the final active lane = **66/66 PASS**.
+- Root-cause isolation via `vta_probe.c` (disassembly in `audit/worklogs/rv64-static-2026-08-26/dynval/evidence/disasm/vta_probe-full.asm` shows `vsetvli zero,e32,m8,ta,ma` → `vle32.v v8` → `vsetvli t0,t1,e32,m8,ta,ma` (vl=1) → `vfadd.vv v8,v8,v16`): **0 of 63 tail lanes changed; no all-ones writeback.** This directly establishes tail retention for the tested e32/m8 `vfadd.vv`; the 66 passing reduction cases show that the covered kernel paths likewise did not expose harmful tail replacement.
+- Interpretation: the RVV instructions themselves are legal; the software wrongly relies on tail-agnostic lanes retaining their previous values, breaking the valid-accumulator invariant of the reduction. The tested X60 paths happen to exhibit benign behavior, so the defect is not observable here. This does not establish a universal tail policy for every X60 `ta` instruction. Implementations permitted to write all-ones would still produce wrong results; the static classification stands. This board result is evidence of "the tested implementation paths do not trigger it", not "the defect does not exist".
+- Shape correction for VLEN=256: the report's VLEN=128 trigger lengths (33/65) correspond to f32 65 and f16-native 129 here; both exercised.
+- Raw logs: `audit/worklogs/rv64-static-2026-08-26/dynval/evidence/logs/reduction.log`, `vta-probe.log`.
+
+## Minimal future dynamic validation (for a ta=all-ones implementation; the board-confirmed benign behavior is documented above)
 
 First confirm implementation with `ONEDNN_VERBOSE=all`, then use `--mode=C --fast-ref=false -v6 --impl=<verified jit:uni name>` in a RISC-V build. At VLEN=128 test:
 
@@ -96,7 +108,7 @@ Use finite nonuniform values and a second set of all ones; repeat at VLEN=256 wi
 
 - Expected: reduction over every source element exactly once.
 - Static actual behavior: after a short final chunk, the horizontal reduction includes `v_acc` lanes outside the final `vl`; those lanes may retain earlier valid accumulators or be replaced with all-ones bit patterns. For sum/mean, an overwritten floating-point lane becomes qNaN and contaminates the result. For max/min, minimumNumber/maximumNumber ignores that qNaN, so a legitimate earlier contribution—and possibly the unique extremum—can be lost. The result is therefore not guaranteed to equal the expected reduction.
-- No runtime output is claimed in this static-only audit.
+- 上述"静态实际行为"是静态推导记录；2026-08-27 板上实测为 PASS（X60 保留 tail 旧值），见"Dynamic validation results"。
 
 ## False-positive and alternative explanations excluded
 

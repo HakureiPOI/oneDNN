@@ -1,0 +1,13 @@
+# SHA-256 of artifacts that remain on the board (NOT in this evidence bundle)
+# board paths under /root/onednn-verify/
+37f3d886833dbb2ef09af356bdf5bc5cb8cb12dc2b8433da34f8f7fb0e0ec21d  /root/onednn-verify/build-rel/src/libdnnl.so.3.14
+169c0721cb465bf3a25dc78d8fbbca622237cf6ab0a9caa94f2dda4b31ed6a32  /root/onednn-verify/build-dbg/src/libdnnl.so.3.14
+9cca35e7e0fb31baeae23d8f4b0243ad09feb48890f3e9a17ef6f9bd34a2c43c  /root/onednn-verify/build-rel/tests/benchdnn/benchdnn
+151a3631544b0041a32c01b21a545650fa1053033465c4dd8cd1f2d557d95e45  /root/onednn-verify/build-dbg/tests/benchdnn/benchdnn
+cd76dbb4dcc55bc9bc7b3a2efbd1d6f02b512c63ce153932256e9bb57ef03092  /root/onednn-verify/dynval/reduction_tail_probe
+5f90336f28d387929c94265c3d99bba2f10868b020d389046d8d8bd1c3fe0356  /root/onednn-verify/dynval/prelu_nan_probe
+f2989de061a029174bd3940b640769000959f908379e0a36f500bc8a8f4bc5a9  /root/onednn-verify/dynval/shuffle_zero_batch_probe
+f10f81aacb2c3079e691db1a53cc31f2f49b6e88fc71be381aff29bed7659cf3  /root/onednn-verify/dynval/shuffle_c_probe
+fa46ac980a5b832e30f5b2a7c3853139cfc2b1306f085e291b2b86fae80e6e2c  /root/onednn-verify/dynval/vta_probe
+a2675ee13beaae7c399722bd4ac3f849207fe10a0b6e9eee5b18a75bf57d2189  /root/onednn-verify/dynval/divzero_probe
+afaabb8dde8a15dafa9e2ae67202752f91798632312aa0ac84afcdad5b96e34d  /root/onednn-verify/dynval/zvfbfwma_probe

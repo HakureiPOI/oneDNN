@@ -1,0 +1,7 @@
+# benchdnn debug zero-batch shuffle — full abort log
+# command: ./benchdnn --mode=C --fast-ref=false --shuffle --dir=FWD_D --dt=f32 --axis=1 --group=2 0x4x1
+
+benchdnn: /root/onednn-verify/src/src/common/utils.hpp:367: dnnl::impl::utils::enable_if_t<(std::is_integral<_Tp>::value && (std::is_integral<_Size>::value || std::is_enum<_Tp2>::value)), typename dnnl::impl::utils::remove_reference<T>::type> dnnl::impl::utils::div_up(T, U) [with T = long int; U = long int; enable_if_t<(std::is_integral<_Tp>::value && (std::is_integral<_Size>::value || std::is_enum<_Tp2>::value)), typename remove_reference<T>::type> = long int; typename remove_reference<T>::type = long int]: Assertion `b > 0' failed.
+timeout: 被监视的命令已核心转储
+bash: 第 9 行：3808696 已中止               timeout 60 ./benchdnn --mode=C --fast-ref=false --shuffle --dir=FWD_D --dt=f32 --axis=1 --group=2 0x4x1 2>&1
+exit=134

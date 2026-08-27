@@ -1,0 +1,76 @@
+# RV64-004 shuffle zero-batch (fixed probe: mutually exclusive fwd/bwd branches, no signal handlers)
+# binary: ~/onednn-verify/dynval/shuffle_zero_batch_probe, linked build-rel/src/libdnnl.so.3.14 (Release)
+
+--- release fwd threads=1 ---
+direction=fwd OMP_NUM_THREADS=1
+fwd impl: jit:rvv
+PD accepted zero-batch descriptor
+step: executing fwd...
+step: execute returned cleanly
+exit=0
+--- release fwd threads=4 ---
+direction=fwd OMP_NUM_THREADS=4
+fwd impl: jit:rvv
+PD accepted zero-batch descriptor
+step: executing fwd...
+step: execute returned cleanly
+exit=0
+--- release fwd threads=8 ---
+direction=fwd OMP_NUM_THREADS=8
+fwd impl: jit:rvv
+PD accepted zero-batch descriptor
+step: executing fwd...
+step: execute returned cleanly
+exit=0
+--- release bwd threads=1 ---
+direction=bwd OMP_NUM_THREADS=1
+hint fwd impl: jit:rvv
+bwd impl: jit:rvv
+PD accepted zero-batch descriptor
+step: executing bwd...
+step: execute returned cleanly
+exit=0
+--- release bwd threads=4 ---
+direction=bwd OMP_NUM_THREADS=4
+hint fwd impl: jit:rvv
+bwd impl: jit:rvv
+PD accepted zero-batch descriptor
+step: executing bwd...
+step: execute returned cleanly
+exit=0
+--- release bwd threads=8 ---
+direction=bwd OMP_NUM_THREADS=8
+hint fwd impl: jit:rvv
+bwd impl: jit:rvv
+PD accepted zero-batch descriptor
+step: executing bwd...
+step: execute returned cleanly
+exit=0
+--- release C-API probe MB=0 ---
+MB=0 C=4 W=1 axis=1 group=2
+engine: success
+md: success
+pd create: success
+pd impl: jit:rvv (success)
+primitive create: success
+src mem: success
+dst mem: success
+stream: success
+step: executing...
+execute: success  <-- RV64-004 interest point
+wait: success
+exit=0
+--- release C-API probe MB=2 (control) ---
+MB=2 C=4 W=1 axis=1 group=2
+engine: success
+md: success
+pd create: success
+pd impl: jit:rvv (success)
+primitive create: success
+src mem: success
+dst mem: success
+stream: success
+step: executing...
+execute: success  <-- RV64-004 interest point
+wait: success
+exit=0

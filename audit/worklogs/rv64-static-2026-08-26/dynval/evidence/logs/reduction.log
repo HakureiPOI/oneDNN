@@ -1,0 +1,334 @@
+# RV64-002 reduction tail probe (fixed: f16 oracle quantizes inputs first, exact compare)
+# binary: ~/onednn-verify/dynval/reduction_tail_probe, linked build-rel/src/libdnnl.so.3.14
+# command form: ./reduction_tail_probe <max|min|sum|mean> <f32|f16> <reduce_size> [extremum_lane]
+# VLMAX=64 (f32 e32/m8, f16 widen) / 128 (f16 native max,min) at VLEN=256
+
+--- max f32 n=65 lane=1 ---
+impl: jit:uni
+alg=max dt=f32 reduce_size=65 extremum_lane=1 VLMAX=64
+expected=1000  got=1000  PASS
+exit=0
+--- max f32 n=66 lane=1 ---
+impl: jit:uni
+alg=max dt=f32 reduce_size=66 extremum_lane=1 VLMAX=64
+expected=1000  got=1000  PASS
+exit=0
+--- max f32 n=70 lane=1 ---
+impl: jit:uni
+alg=max dt=f32 reduce_size=70 extremum_lane=1 VLMAX=64
+expected=1000  got=1000  PASS
+exit=0
+--- max f32 n=96 lane=1 ---
+impl: jit:uni
+alg=max dt=f32 reduce_size=96 extremum_lane=1 VLMAX=64
+expected=1000  got=1000  PASS
+exit=0
+--- max f32 n=129 lane=1 ---
+impl: jit:uni
+alg=max dt=f32 reduce_size=129 extremum_lane=1 VLMAX=64
+expected=1000  got=1000  PASS
+exit=0
+--- max f32 n=130 lane=1 ---
+impl: jit:uni
+alg=max dt=f32 reduce_size=130 extremum_lane=1 VLMAX=64
+expected=1000  got=1000  PASS
+exit=0
+--- max f32 n=160 lane=1 ---
+impl: jit:uni
+alg=max dt=f32 reduce_size=160 extremum_lane=1 VLMAX=64
+expected=1000  got=1000  PASS
+exit=0
+--- max f32 n=200 lane=1 ---
+impl: jit:uni
+alg=max dt=f32 reduce_size=200 extremum_lane=1 VLMAX=64
+expected=1000  got=1000  PASS
+exit=0
+--- max f16 n=65 lane=1 ---
+impl: jit:uni
+alg=max dt=f16 reduce_size=65 extremum_lane=1 VLMAX=128
+expected=1000  got=1000  PASS
+exit=0
+--- max f16 n=66 lane=1 ---
+impl: jit:uni
+alg=max dt=f16 reduce_size=66 extremum_lane=1 VLMAX=128
+expected=1000  got=1000  PASS
+exit=0
+--- max f16 n=70 lane=1 ---
+impl: jit:uni
+alg=max dt=f16 reduce_size=70 extremum_lane=1 VLMAX=128
+expected=1000  got=1000  PASS
+exit=0
+--- max f16 n=96 lane=1 ---
+impl: jit:uni
+alg=max dt=f16 reduce_size=96 extremum_lane=1 VLMAX=128
+expected=1000  got=1000  PASS
+exit=0
+--- max f16 n=129 lane=1 ---
+impl: jit:uni
+alg=max dt=f16 reduce_size=129 extremum_lane=1 VLMAX=128
+expected=1000  got=1000  PASS
+exit=0
+--- max f16 n=130 lane=1 ---
+impl: jit:uni
+alg=max dt=f16 reduce_size=130 extremum_lane=1 VLMAX=128
+expected=1000  got=1000  PASS
+exit=0
+--- max f16 n=160 lane=1 ---
+impl: jit:uni
+alg=max dt=f16 reduce_size=160 extremum_lane=1 VLMAX=128
+expected=1000  got=1000  PASS
+exit=0
+--- max f16 n=200 lane=1 ---
+impl: jit:uni
+alg=max dt=f16 reduce_size=200 extremum_lane=1 VLMAX=128
+expected=1000  got=1000  PASS
+exit=0
+--- min f32 n=65 lane=1 ---
+impl: jit:uni
+alg=min dt=f32 reduce_size=65 extremum_lane=1 VLMAX=64
+expected=-1000  got=-1000  PASS
+exit=0
+--- min f32 n=66 lane=1 ---
+impl: jit:uni
+alg=min dt=f32 reduce_size=66 extremum_lane=1 VLMAX=64
+expected=-1000  got=-1000  PASS
+exit=0
+--- min f32 n=70 lane=1 ---
+impl: jit:uni
+alg=min dt=f32 reduce_size=70 extremum_lane=1 VLMAX=64
+expected=-1000  got=-1000  PASS
+exit=0
+--- min f32 n=96 lane=1 ---
+impl: jit:uni
+alg=min dt=f32 reduce_size=96 extremum_lane=1 VLMAX=64
+expected=-1000  got=-1000  PASS
+exit=0
+--- min f32 n=129 lane=1 ---
+impl: jit:uni
+alg=min dt=f32 reduce_size=129 extremum_lane=1 VLMAX=64
+expected=-1000  got=-1000  PASS
+exit=0
+--- min f32 n=130 lane=1 ---
+impl: jit:uni
+alg=min dt=f32 reduce_size=130 extremum_lane=1 VLMAX=64
+expected=-1000  got=-1000  PASS
+exit=0
+--- min f32 n=160 lane=1 ---
+impl: jit:uni
+alg=min dt=f32 reduce_size=160 extremum_lane=1 VLMAX=64
+expected=-1000  got=-1000  PASS
+exit=0
+--- min f32 n=200 lane=1 ---
+impl: jit:uni
+alg=min dt=f32 reduce_size=200 extremum_lane=1 VLMAX=64
+expected=-1000  got=-1000  PASS
+exit=0
+--- min f16 n=65 lane=1 ---
+impl: jit:uni
+alg=min dt=f16 reduce_size=65 extremum_lane=1 VLMAX=128
+expected=-1000  got=-1000  PASS
+exit=0
+--- min f16 n=66 lane=1 ---
+impl: jit:uni
+alg=min dt=f16 reduce_size=66 extremum_lane=1 VLMAX=128
+expected=-1000  got=-1000  PASS
+exit=0
+--- min f16 n=70 lane=1 ---
+impl: jit:uni
+alg=min dt=f16 reduce_size=70 extremum_lane=1 VLMAX=128
+expected=-1000  got=-1000  PASS
+exit=0
+--- min f16 n=96 lane=1 ---
+impl: jit:uni
+alg=min dt=f16 reduce_size=96 extremum_lane=1 VLMAX=128
+expected=-1000  got=-1000  PASS
+exit=0
+--- min f16 n=129 lane=1 ---
+impl: jit:uni
+alg=min dt=f16 reduce_size=129 extremum_lane=1 VLMAX=128
+expected=-1000  got=-1000  PASS
+exit=0
+--- min f16 n=130 lane=1 ---
+impl: jit:uni
+alg=min dt=f16 reduce_size=130 extremum_lane=1 VLMAX=128
+expected=-1000  got=-1000  PASS
+exit=0
+--- min f16 n=160 lane=1 ---
+impl: jit:uni
+alg=min dt=f16 reduce_size=160 extremum_lane=1 VLMAX=128
+expected=-1000  got=-1000  PASS
+exit=0
+--- min f16 n=200 lane=1 ---
+impl: jit:uni
+alg=min dt=f16 reduce_size=200 extremum_lane=1 VLMAX=128
+expected=-1000  got=-1000  PASS
+exit=0
+--- sum f32 n=65 lane=1 ---
+impl: jit:uni
+alg=sum dt=f32 reduce_size=65 extremum_lane=1 VLMAX=64
+expected=162.5  got=162.5  PASS
+exit=0
+--- sum f32 n=66 lane=1 ---
+impl: jit:uni
+alg=sum dt=f32 reduce_size=66 extremum_lane=1 VLMAX=64
+expected=163.5  got=163.5  PASS
+exit=0
+--- sum f32 n=70 lane=1 ---
+impl: jit:uni
+alg=sum dt=f32 reduce_size=70 extremum_lane=1 VLMAX=64
+expected=172  got=172  PASS
+exit=0
+--- sum f32 n=96 lane=1 ---
+impl: jit:uni
+alg=sum dt=f32 reduce_size=96 extremum_lane=1 VLMAX=64
+expected=237  got=237  PASS
+exit=0
+--- sum f32 n=129 lane=1 ---
+impl: jit:uni
+alg=sum dt=f32 reduce_size=129 extremum_lane=1 VLMAX=64
+expected=322.5  got=322.5  PASS
+exit=0
+--- sum f32 n=130 lane=1 ---
+impl: jit:uni
+alg=sum dt=f32 reduce_size=130 extremum_lane=1 VLMAX=64
+expected=325  got=325  PASS
+exit=0
+--- sum f32 n=160 lane=1 ---
+impl: jit:uni
+alg=sum dt=f32 reduce_size=160 extremum_lane=1 VLMAX=64
+expected=398  got=398  PASS
+exit=0
+--- sum f32 n=200 lane=1 ---
+impl: jit:uni
+alg=sum dt=f32 reduce_size=200 extremum_lane=1 VLMAX=64
+expected=497  got=497  PASS
+exit=0
+--- sum f16 n=65 lane=1 ---
+impl: jit:uni
+alg=sum dt=f16 reduce_size=65 extremum_lane=1 VLMAX=64
+expected=162.5  got=162.5  PASS
+exit=0
+--- sum f16 n=66 lane=1 ---
+impl: jit:uni
+alg=sum dt=f16 reduce_size=66 extremum_lane=1 VLMAX=64
+expected=163.5  got=163.5  PASS
+exit=0
+--- sum f16 n=70 lane=1 ---
+impl: jit:uni
+alg=sum dt=f16 reduce_size=70 extremum_lane=1 VLMAX=64
+expected=172  got=172  PASS
+exit=0
+--- sum f16 n=96 lane=1 ---
+impl: jit:uni
+alg=sum dt=f16 reduce_size=96 extremum_lane=1 VLMAX=64
+expected=237  got=237  PASS
+exit=0
+--- sum f16 n=129 lane=1 ---
+impl: jit:uni
+alg=sum dt=f16 reduce_size=129 extremum_lane=1 VLMAX=64
+expected=322.5  got=322.5  PASS
+exit=0
+--- sum f16 n=130 lane=1 ---
+impl: jit:uni
+alg=sum dt=f16 reduce_size=130 extremum_lane=1 VLMAX=64
+expected=325  got=325  PASS
+exit=0
+--- sum f16 n=160 lane=1 ---
+impl: jit:uni
+alg=sum dt=f16 reduce_size=160 extremum_lane=1 VLMAX=64
+expected=398  got=398  PASS
+exit=0
+--- sum f16 n=200 lane=1 ---
+impl: jit:uni
+alg=sum dt=f16 reduce_size=200 extremum_lane=1 VLMAX=64
+expected=497  got=497  PASS
+exit=0
+--- mean f32 n=65 lane=1 ---
+impl: jit:uni
+alg=mean dt=f32 reduce_size=65 extremum_lane=1 VLMAX=64
+expected=2.5  got=2.5  PASS
+exit=0
+--- mean f32 n=66 lane=1 ---
+impl: jit:uni
+alg=mean dt=f32 reduce_size=66 extremum_lane=1 VLMAX=64
+expected=2.477273  got=2.477273  PASS
+exit=0
+--- mean f32 n=70 lane=1 ---
+impl: jit:uni
+alg=mean dt=f32 reduce_size=70 extremum_lane=1 VLMAX=64
+expected=2.457143  got=2.457143  PASS
+exit=0
+--- mean f32 n=96 lane=1 ---
+impl: jit:uni
+alg=mean dt=f32 reduce_size=96 extremum_lane=1 VLMAX=64
+expected=2.46875  got=2.46875  PASS
+exit=0
+--- mean f32 n=129 lane=1 ---
+impl: jit:uni
+alg=mean dt=f32 reduce_size=129 extremum_lane=1 VLMAX=64
+expected=2.5  got=2.5  PASS
+exit=0
+--- mean f32 n=130 lane=1 ---
+impl: jit:uni
+alg=mean dt=f32 reduce_size=130 extremum_lane=1 VLMAX=64
+expected=2.5  got=2.5  PASS
+exit=0
+--- mean f32 n=160 lane=1 ---
+impl: jit:uni
+alg=mean dt=f32 reduce_size=160 extremum_lane=1 VLMAX=64
+expected=2.4875  got=2.4875  PASS
+exit=0
+--- mean f32 n=200 lane=1 ---
+impl: jit:uni
+alg=mean dt=f32 reduce_size=200 extremum_lane=1 VLMAX=64
+expected=2.485  got=2.485  PASS
+exit=0
+--- mean f16 n=65 lane=1 ---
+impl: jit:uni
+alg=mean dt=f16 reduce_size=65 extremum_lane=1 VLMAX=64
+expected=2.5  got=2.5  PASS
+exit=0
+--- mean f16 n=66 lane=1 ---
+impl: jit:uni
+alg=mean dt=f16 reduce_size=66 extremum_lane=1 VLMAX=64
+expected=2.476562  got=2.476562  PASS
+exit=0
+--- mean f16 n=70 lane=1 ---
+impl: jit:uni
+alg=mean dt=f16 reduce_size=70 extremum_lane=1 VLMAX=64
+expected=2.457031  got=2.457031  PASS
+exit=0
+--- mean f16 n=96 lane=1 ---
+impl: jit:uni
+alg=mean dt=f16 reduce_size=96 extremum_lane=1 VLMAX=64
+expected=2.46875  got=2.46875  PASS
+exit=0
+--- mean f16 n=129 lane=1 ---
+impl: jit:uni
+alg=mean dt=f16 reduce_size=129 extremum_lane=1 VLMAX=64
+expected=2.5  got=2.5  PASS
+exit=0
+--- mean f16 n=130 lane=1 ---
+impl: jit:uni
+alg=mean dt=f16 reduce_size=130 extremum_lane=1 VLMAX=64
+expected=2.5  got=2.5  PASS
+exit=0
+--- mean f16 n=160 lane=1 ---
+impl: jit:uni
+alg=mean dt=f16 reduce_size=160 extremum_lane=1 VLMAX=64
+expected=2.488281  got=2.488281  PASS
+exit=0
+--- mean f16 n=200 lane=1 ---
+impl: jit:uni
+alg=mean dt=f16 reduce_size=200 extremum_lane=1 VLMAX=64
+expected=2.484375  got=2.484375  PASS
+exit=0
+=== control: extremum in final active chunk ===
+impl: jit:uni
+alg=max dt=f32 reduce_size=65 extremum_lane=64 VLMAX=64
+expected=1000  got=1000  PASS
+exit=0
+impl: jit:uni
+alg=min dt=f16 reduce_size=129 extremum_lane=128 VLMAX=128
+expected=-1000  got=-1000  PASS
+exit=0

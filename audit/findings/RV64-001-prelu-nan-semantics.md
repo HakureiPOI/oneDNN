@@ -1,10 +1,11 @@
 # RV64-001: PReLU JIT exceptional-value semantic divergence
 
-- 状态：静态高置信（实现/reference/历史策略不一致；公开 NaN 契约仍未闭环）
+- 状态：静态高置信 + 部分动态确认（2026-08-27 板上复现本次测试矩阵 16 个 f32/f16 组合的 qNaN→0；公开 NaN 契约仍未闭环）
 - 严重性：medium（若要求与共同 reference 和既有 RV64 NaN-preserving 策略一致，则会产生静默数值差异）
 - 审计基线：`8f49eae32bdec3674a9a98ea1524a85cd1f302db`
-- 当前文档 HEAD：`529c7247f524902377455c62ab283b44918e285c`
-- 环境：仅静态审计；x86_64 WSL2；未构建、未运行 benchdnn/ctest/QEMU/硬件/sanitizer；无 RV64 执行环境。
+- 静态审计文档 HEAD：`529c7247f524902377455c62ab283b44918e285c`
+- 动态验证文档基线 HEAD：`dc863e4afba22fba060d7059683a67a9b1bc8e6c`（静态审计文档提交；动态验证结果作为其增量修订）
+- 环境：静态审计于 x86_64 WSL2 完成；动态验证于 2026-08-27 在 Spacemit K1（见"动态验证结果"章节）完成。
 - primitive / implementation：PReLU forward / `jit_uni_prelu_fwd_t`（registered by `CPU_INSTANCE_RV64`）
 - 涉及文件和符号：
   - `src/cpu/cpu_prelu_list.cpp:45-56`，`jit_uni_prelu_fwd_t` 的 RV64 注册顺序；
@@ -93,7 +94,18 @@ NaN 比较为 false，`NaN * alpha` 仍为 NaN。
 - 任何调用 standalone PReLU 的上游图/primitive 都可能观察 RV64 与 reference 不同的 NaN-to-zero 结果；backward 仍为 reference，不受此 finding 直接影响。
 - 该问题与 #5370 的共享 injector 问题不同，不能只修 injector；需要修复 standalone PReLU kernel 的公式或显式 NaN mask。
 
-## 最小复现命令（未来动态验证；本阶段未执行）
+## 动态验证结果（2026-08-27，Spacemit K1 / X60，VLEN=256，V+Zvfh，无 Zvfbfwma）
+
+状态：**部分动态确认**（本次测试矩阵中的 16 个 f32/f16 组合全部复现 qNaN→0）。
+
+- 探针（`audit/worklogs/rv64-static-2026-08-26/dynval/prelu_nan_probe.cpp`）在基线 `8f49eae32` 的板上 Release 构建上运行；verbose 确认 `jit:rvv`。
+- 权重 rank 已按 `src/common/prelu.cpp:98` 的 ndims 一致要求修正（初版 nchw/scalar 用 rank-1 权重被 PD 拒绝，属探针错误，已修正）；1D 下 per_oc 与 scalar 同形去重。
+- 测试矩阵：f32/f16 × {x,nc,nchw} × {full,scalar,per_oc} 去重后 8 组 × 2 dtype = 16 个组合，**全部命中 `jit:rvv` 且 qNaN → 0**（f32 输出 bits=0x00000000，f16 输出 bits=0x0000），与静态推导的 `max(0,NaN)+α·min(NaN,0)=0` 一致。
+- 覆盖边界：矩阵仅含 plain layout；NHWC、blocked layout、bf16 等可达路径未测。oracle 为共同 reference 源码 `s > 0 ? s : s*alpha` 的静态语义推导（NaN 输入输出 NaN），非板上运行 reference 实现的验证。
+- 公开 NaN 契约的最终裁定仍留给维护者。
+- 原始日志：`audit/worklogs/rv64-static-2026-08-26/dynval/evidence/logs/prelu.log`、`verbose-impl.log`。
+
+## 最小复现命令（静态审计阶段的建议；动态阶段已由上述探针执行）
 
 需要在具备 RV64 V 的构建中先用 verbose 确认实现，再定向运行：
 
@@ -103,13 +115,13 @@ ONEDNN_VERBOSE=all <benchdnn>/benchdnn --mode=C --fast-ref=false -v6 \
   --dir=FWD --attr="post-ops=none" <one-element-shape>
 ```
 
-输入缓冲必须包含 qNaN（例如使用 benchdnn buffer-prefix 或等价的专用 harness）；预期先从 verbose 确认 `jit:rvv`，然后比较 `dst` 是否仍为 NaN。需要重复 f16/bf16、scalar/full/per-oc 和 VLEN 128/256/512/1024。由于本阶段禁止动态执行，以上命令是建议而非结果。
+输入缓冲必须包含 qNaN（例如使用 benchdnn buffer-prefix 或等价的专用 harness）；预期先从 verbose 确认 `jit:rvv`，然后比较 `dst` 是否仍为 NaN。动态阶段已经覆盖 f32/f16 plain-layout 的 scalar/full/per-oc 组合；后续仍需补 bf16、NHWC、blocked layout、其他 VLEN，以及 sNaN、signed zero 和无限 weight。
 
 ## 预期结果与实际结果
 
 - reference/既有 RV64 NaN-preserving 策略下的预期：NaN 输入对应输出为 NaN，符号/quieting 细节按 dtype conversion 规则处理；这不是当前文档声称的无条件公共 API 保证。
 - 静态推导的 RV64 实际结果：`vfmax(NaN, 0)=0`、`vfmin(NaN, 0)=0`，FMA 输出为 `0`，随后存储为零。
-- 没有动态复现数据；“实际结果”是从可达指令序列和 RVV 规范推导的静态结果，需在目标 RV64 上验证。
+- 动态实际：本次板上测试矩阵中的 16 个 f32/f16 plain-layout 组合全部得到零，确认了上述静态推导在这些路径上的可观察结果；未覆盖路径仍按“动态未测”保留。
 
 ## 反证和误报排除
 
@@ -121,7 +133,7 @@ ONEDNN_VERBOSE=all <benchdnn>/benchdnn --mode=C --fast-ref=false -v6 \
 
 ## 现有静态测试为何未捕获
 
-- `tests/benchdnn/prelu/ref_prelu.cpp` 提供 reference，但本阶段未执行，且普通数据生成通常不保证 NaN；需要 buffer-prefix/专用值矩阵。
+- `tests/benchdnn/prelu/ref_prelu.cpp` 提供 reference，但 CI 的普通数据生成不保证 NaN 输入；动态阶段以专用探针注入 qNaN 覆盖（见"动态验证结果"），CI 矩阵本身仍未覆盖 NaN。
 - RISC-V CI 的 PReLU tests 位于 `.github/automation/riscv/test.sh:119,162,177`，但 CI 默认 QEMU 显式启用 V/Zvfh/Zvfbfwma，静态配置没有证据覆盖 NaN 输入、所有 broadcast 分支或 implementation filter。
 - 现有测试即使通过，也可能命中 reference；指导书要求先用 verbose 确认目标实现。当前 SMOKE/CI 没有对 NaN 语义提供静态保证。
 

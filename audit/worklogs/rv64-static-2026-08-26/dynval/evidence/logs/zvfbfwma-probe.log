@@ -1,0 +1,8 @@
+# zvfbfwma_probe — runtime Zvfbfwma detection (oneDNN probe_zvfbfwma_impl replication)
+# build: gcc -O2 -o zvfbfwma_probe zvfbfwma_probe.c
+# method: execute vfwmaccbf16.vf (0xee655157) under SIGILL guard, encodings identical
+#         to src/cpu/rv64/cpu_isa_traits.cpp
+
+SIGILL trapped
+zvfbfwma instruction: NOT executable (trapped)
+exit=1

@@ -1,0 +1,6 @@
+# vta_probe — X60 tail-agnostic policy microbenchmark
+# build: gcc -march=rv64gcv -O1 -o vta_probe vta_probe.c
+# run: ./vta_probe
+
+tail lanes changed: 0/63, all-ones(qNaN bits): 0
+after[1]=101.0 after[32]=132.0 after[63]=163.0 (init: 101.0 132.0 163.0)

@@ -1,10 +1,11 @@
 # RV64-004: Shuffle divides by zero for a legal zero-batch descriptor
 
-- 状态：静态确认
+- 状态：静态确认 + 动态确认（2026-08-27：Debug 构建断言 abort 复现；Release 该特定二进制未观察到可见故障）
 - 严重性：high（合法 API descriptor 在 primitive execute 前触发断言/除零，造成 availability failure）
 - 审计基线：`8f49eae32bdec3674a9a98ea1524a85cd1f302db`
-- 当前文档 HEAD：`529c7247f524902377455c62ab283b44918e285c`
-- 环境：仅静态审计；x86_64 WSL2；未构建或运行 RV64/QEMU/benchdnn/ctest。
+- 静态审计文档 HEAD：`529c7247f524902377455c62ab283b44918e285c`
+- 动态验证文档基线 HEAD：`dc863e4afba22fba060d7059683a67a9b1bc8e6c`（静态审计文档提交；动态验证结果作为其增量修订）
+- 环境：静态审计于 x86_64 WSL2；动态验证于 2026-08-27 在 Spacemit K1 完成。
 - primitive / implementation：Shuffle forward/backward / `jit_uni_shuffle_t`
 - 涉及文件和符号：
   - `src/common/memory_desc.cpp:48-63`；
@@ -77,7 +78,19 @@ The public and RV64 PD layers do not establish that precondition. The outer `par
 - The failure occurs before any kernel call, so it is independent of VLEN, vector tail values, input contents, or thread count (except the exact assertion/release symptom).
 - Reference fallback is not reached once the RV64 PD returns success.
 
-## 最小未来动态验证（本阶段未执行）
+## 动态验证结果（2026-08-27，Spacemit K1 / X60，VLEN=256）
+
+状态：**Debug 构建动态确认**（assert abort）；**Release 该特定二进制未观察到可见故障**（源代码仍含 C++ 除零 UB）。
+
+- PD 确认接受 zero-batch descriptor（`MB=0,C=4,W=1,axis=1,group=2`，fwd/bwd 均 `impl: jit:rvv`）。
+- **Debug：assert abort 全量复现**——C++ 探针 fwd/bwd × OMP 线程 1/4/8（6 组）+ C API 探针（1 组）= 7/7 在 `utils.hpp:367` 触发 `assert(b > 0)`（SIGABRT，exit=134）；benchdnn `--mode=C --shuffle 0x4x1` 同样 abort。Debug 库反汇编（`audit/worklogs/rv64-static-2026-08-26/dynval/evidence/disasm/shuffle-execute-debug.asm`）显示 `execute()` 三次调用未内联的 `utils::div_up`（断言位于该函数内）。
+- **Release：该特定二进制未观察到可见故障**——C++ 探针 6/6 exit=0（zero-work 干净完成）；benchdnn f32/f16/s32 × fwd/bwd 共 6 组全部 PASSED，3D `--tag=ncw/nwc` 亦 PASSED（`audit/worklogs/rv64-static-2026-08-26/dynval/evidence/logs/shuffle-rel.log`、`shuffle-rel-extra.log`）。
+- Release 机制证据链：`divzero_probe.c` 实测 RISC-V `div` 指令除零不 trap、返回 -1；实际库反汇编（`audit/worklogs/rv64-static-2026-08-26/dynval/evidence/disasm/shuffle-execute-release.asm`）确认 release `execute()` 内联了同一 `div` 结构（`0x6095f8: div a0,a0,s2` 即内层 `div_up(nthr,tasks)`，零除数路径实际经过）。Release 的实际成功行为与该除零机制一致（div 返回 -1 → `div_up` 得 0 → `max(1,...)` 钳为 1 → `parallel_nd(0,...)` 早退）。**源代码仍为 C++ UB**；"未观察到故障"仅描述该特定二进制（该硬件+GCC 13 组合），不泛化。
+- `0x4x64` 是 3D `{N,C,W}` 描述，verbose 显示默认 tag 为 `abc`；当 `W=64` 时该 plain `ncw` 布局不匹配 RV64 PD 支持的 blocked/nspc tag，故在 `jit_uni_shuffle.hpp:102` 被拒绝并落 reference。`0x4x1` 的 `abc/ncw` 因 `W=1` 可与 `nwc` 形成 stride 等价而命中 JIT；这不是 4D `nchw/nhwc` 测试，也不能解释为 RV64 JIT 普遍支持 plain `ncw`。
+- 探针修订记录：初版 "object is not initialized" 系探针自身 bug（`static_cast<primitive_desc&&>` 移走 PD 句柄 + 无条件构造 backward PD），已修正并全部重跑；C 探针使用 `dnnl_primitive_desc_query(pd, dnnl_query_impl_info_str, ...)`。
+- 原始日志：`audit/worklogs/rv64-static-2026-08-26/dynval/evidence/logs/shuffle-dbg.log`、`shuffle-rel.log`、`shuffle-rel-extra.log`、`benchdnn-dbg-abort.log`、`divzero-probe.log`。
+
+## 复现命令（动态阶段已执行；命令与日志见 evidence/logs/）
 
 In an RV64 build, create a zero-batch shuffle descriptor with valid `axis=1`, `group_size`, equal src/dst layouts, and default attributes. Use `ONEDNN_VERBOSE=all` to confirm the selected implementation; then execute with `--mode=C --fast-ref=false -v6 --impl=<verified jit:rvv name>` or a focused API harness. Test debug and release/RelWithAssert builds separately. Expected behavior is a successful zero-work execution that does not access source or destination buffers, matching the public zero-volume convention and the reference path's natural empty iteration.
 
@@ -85,7 +98,7 @@ In an RV64 build, create a zero-batch shuffle descriptor with valid `axis=1`, `g
 
 - Expected: the accepted zero-volume descriptor executes successfully as zero work without touching source/destination buffers or evaluating partition arithmetic that requires a positive task count.
 - Static actual: RV64 PD can accept the descriptor; `tasks=0`; `div_up(nthr, 0)` is called. Debug asserts at `utils.hpp:367`; release has division-by-zero undefined behavior.
-- No runtime crash is claimed because this stage did not execute code.
+- 上述为静态阶段推导；2026-08-27 板上实测：Debug abort（exit 134）、Release 该特定二进制干净完成（exit 0），见"动态验证结果"。
 
 ## 反证和误报排除
 
@@ -97,7 +110,7 @@ In an RV64 build, create a zero-batch shuffle descriptor with valid `axis=1`, `g
 
 ## 现有测试为何未捕获
 
-`tests/gtests/test_shuffle.cpp` covers positive dimensions and layout/group cases but does not provide a zero-batch execute case. RISC-V CI uses QEMU VLEN 128/256 and does not add zero-dimension shuffle coverage. Existing tests cannot be treated as proof because the target RV64 implementation was not dynamically confirmed in this audit.
+`tests/gtests/test_shuffle.cpp` covers positive dimensions and layout/group cases but does not provide a zero-batch execute case. RISC-V CI uses QEMU VLEN 128/256 and does not add zero-dimension shuffle coverage. The dedicated 2026-08-27 probes dynamically confirmed the target RV64 implementation and the Debug abort, but the existing automated test matrix still lacks this regression case.
 
 ## 修复方向（不在审计阶段直接改代码）
 
@@ -105,4 +118,5 @@ Add an explicit zero-work guard in the shuffle PD/execute contract. Preferred be
 
 ## 尚未解决的问题
 
-- No debug assertion or release division-by-zero was executed in this static-only audit; future execution is regression validation, not a prerequisite for the static reachability conclusion.
+- The current Release binary completed zero work without a visible failure, but that observation does not make the source-level C++ division by zero portable or defined across compilers and targets.
+- No automated regression test currently protects the legal zero-batch case; the dedicated probe evidence should be converted into forward/backward coverage for supported dtypes and layouts.

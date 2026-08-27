@@ -1,0 +1,11 @@
+# oneDNN verbose implementation confirmation lines (release)
+# command prefix: ONEDNN_VERBOSE=1 ./<probe> ...
+
+## prelu f32 x full
+onednn_verbose,v1,primitive,exec,cpu,prelu,jit:rvv,forward_inference,data:f32::blocked:a::f0 wei:f32::blocked:a::f0,,,16:16,1.13013
+## prelu f16 nchw per_oc
+onednn_verbose,v1,primitive,exec,cpu,prelu,jit:rvv,forward_inference,data:f16::blocked:abcd::f0 wei:f16::blocked:abcd::f0,,,2x16x3x3:1x16x1x1,1.10693
+## reduction max f32 65
+onednn_verbose,v1,primitive,exec,cpu,reduction,jit:uni,undef,src:f32::blocked:abcd::f0 dst:f32::blocked:abcd::f0,,alg:reduction_max p:0 eps:0,1x1x1x65:1x1x1x1,0.0109863
+## reduction min f16 129
+onednn_verbose,v1,primitive,exec,cpu,reduction,jit:uni,undef,src:f16::blocked:abcd::f0 dst:f16::blocked:abcd::f0,,alg:reduction_min p:0 eps:0,1x1x1x129:1x1x1x1,0.0100098

@@ -1,0 +1,11 @@
+# divzero_probe — RISC-V div-by-zero behavior
+# build: gcc -O2 -o divzero_probe divzero_probe.c
+# run: ./divzero_probe
+
+asm div 7/0 = -1 (spec: -1, no trap)
+div_up(8, 0) pattern = 1 + (8-1)/0 = 0
+div_up(sp=1, inner=0) = 1; nstl::max(1, 1) = 1
+conclusion: hardware div-by-zero returns -1 without trapping;
+the shuffle release path computes wrong intermediate values but
+the max(1, ...) clamp keeps sp_split_size == 1 and no fault is
+observable. The C++ source is still UB.

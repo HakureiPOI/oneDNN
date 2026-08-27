@@ -1,10 +1,11 @@
 # RV64-003: BF16 BRGEMM JIT misaligns the RISC-V stack
 
-- 状态：静态确认（ABI invariant violation; runtime crash impact not dynamically reproduced）
+- 状态：静态确认（ABI invariant violation；动态验证环境阻塞——可用硬件无 Zvfbfwma）
 - 严重性：medium（可达 ABI 合规缺陷；当前 leaf kernel 的数值错误或崩溃尚未证明）
 - 审计基线：`8f49eae32bdec3674a9a98ea1524a85cd1f302db`
-- 当前文档 HEAD：`529c7247f524902377455c62ab283b44918e285c`
-- 环境：仅静态审计；x86_64 WSL2；未构建或运行 RV64/QEMU/benchdnn/ctest。
+- 静态审计文档 HEAD：`529c7247f524902377455c62ab283b44918e285c`
+- 动态验证文档基线 HEAD：`dc863e4afba22fba060d7059683a67a9b1bc8e6c`（静态审计文档提交；动态验证结果作为其增量修订）
+- 环境：静态审计于 x86_64 WSL2；动态验证因板卡 ISA 无 Zvfbfwma 阻塞（2026-08-27）。
 - primitive / implementation：BF16 BRGEMM JIT kernel used by RV64 MatMul, inner product, and convolution.
 - 涉及文件和符号：
   - `src/cpu/rv64/brgemm/jit_brgemm_kernel.cpp:821-883,1158-1169`，`jit_brgemm_bf16_kernel_t::generate()`；
@@ -73,7 +74,16 @@ Six slots require 48 bytes; the extra 8 bytes makes the frame size non-multiple-
 - RISC-V ELF psABI, calling convention / stack pointer alignment: <https://riscv-non-isa.github.io/riscv-elf-psabi-doc/>.
 - The ABI requires 16-byte alignment for RV64 LP64 procedure stack state; a 56-byte decrement from an aligned entry is 8-byte aligned.
 
-## 最小未来动态验证（本阶段未执行）
+## 动态验证结果（2026-08-27，Spacemit K1 / X60）
+
+状态：**动态验证受阻**——本次精简构建和环境未提供目标路径，验证未执行。两个独立原因均已实证：
+
+1. 指令层面:`/proc/cpuinfo` ISA 字符串不含 Zvfbfwma 只是初步信号(oneDNN 实际用运行时 SIGILL 探测,`cpu_isa_traits.cpp` 的 `probe_zvfbfwma_impl`)。本验证用相同指令编码(`vfwmaccbf16.vf`,0xee655157)、相同 SIGILL-guard 模式的探针实测:**SIGILL trapped,指令不可执行**(`audit/worklogs/rv64-static-2026-08-26/dynval/evidence/logs/zvfbfwma-probe.log`)。该板上 BF16 BRGEMM PD gate(`mayiuse(zvfbfwma)`)不可能通过。
+2. 构建层面:本次构建 `ONEDNN_ENABLE_PRIMITIVE="PRELU;REDUCTION;SHUFFLE"` 未包含 MatMul/inner-product/convolution 等 BRGEMM consumer,即使扩展可用也无法从该构建进入目标路径。
+
+本节不构成"X60 一定不支持 Zvfbfwma"的一般性断言(尽管 ISA 字符串与运行时指令探测一致指向该结论),更不构成对 finding 本身的证伪。
+
+## 最小动态验证步骤（需 Zvfbfwma 环境；本轮因硬件阻塞未执行）
 
 Use a RV64 V+Zvfbfwma build and first confirm the exact BRGEMM implementation with `ONEDNN_VERBOSE=all`. Then run a minimal BF16 MatMul/inner-product/convolution case with `--mode=C --fast-ref=false -v6 --impl=<verified brgemm:rvv_zvfbfwma name>`. Inspect the generated prologue with a disassembler or JIT dump. A dedicated validation-only kernel variant may emit a nested ABI-conforming call or explicitly aligned stack operation to make the misalignment observable. Repeat with normal and large K/N, threads 1 and max. The static result does not claim that the current leaf body or ordinary QEMU must fault.
 
@@ -81,7 +91,7 @@ Use a RV64 V+Zvfbfwma build and first confirm the exact BRGEMM implementation wi
 
 - Expected: `sp % 16 == 0` throughout the generated function body, with all callee-saved registers restored.
 - Static actual: after the BF16 prologue, `sp % 16 == 8`; it returns to alignment only at the epilogue.
-- No dynamic crash/output is claimed in this static-only stage.
+- No target-path dynamic crash or numerical output is claimed: the board rejected the required Zvfbfwma instruction before a BF16 BRGEMM JIT path could be selected.
 
 ## 反证和误报排除
 
@@ -101,5 +111,5 @@ Reserve a frame size that is a multiple of 16 (for example 64 bytes, or 48 bytes
 
 ## 尚未解决的问题
 
-- No RV64 disassembly or runtime alignment-checking harness is available in this environment.
+- No target-generated BF16 BRGEMM JIT dump or runtime alignment-checking harness was obtained; the available board cannot pass the Zvfbfwma gate and the validation build omitted BRGEMM consumers.
 - The exact runtime symptom is not known; the confirmed result is the ABI invariant violation, not a demonstrated current availability or numerical failure.
